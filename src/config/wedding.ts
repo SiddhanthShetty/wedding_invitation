@@ -46,20 +46,22 @@ const trackSchema = z.object({
   title: text,
   /** Path under /public, e.g. "/audio/wedding-music.mp3". Replace the file or change the path. */
   src: z.string().startsWith("/"),
-  credit: text,
+  /** Who made the recording; shown in the footer. null for music made for this site. */
+  credit: text.nullable(),
 });
 
 const familiesSchema = z.object({
   /** Full names as they should appear in the formal line, e.g. "Sweekruti Shetty". null uses brideName / groomName. */
   brideFullName: text.nullable(),
   groomFullName: text.nullable(),
-  /** The bride's parents, written exactly as they should appear, e.g. "Mr Ramesh Shetty and Mrs Sudha Shetty". */
+  /** The bride's parents, written exactly as they should appear, e.g. "Shri Ramesh Shetty and Smt. Sudha Shetty". */
   brideParents: text.nullable(),
   /** The groom's parents, written the same way. */
   groomParents: text.nullable(),
   /**
-   * Grandparents, shown under "With the blessings of" at the top of the card, one pair per line.
-   * null leaves that side out for guests (the local preview shows a reminder to fill it in).
+   * Grandparents, shown under the parents as "G/D/o …" (bride) and "G/S/o …" (groom), one pair per
+   * line, each with its own G/D/o or G/S/o. Write "Lt." for someone who has passed away; screen
+   * readers say "Late". null leaves that line out for guests (the local preview shows a reminder).
    */
   brideGrandparents: z.array(text).min(1).nullable(),
   groomGrandparents: z.array(text).min(1).nullable(),
@@ -120,10 +122,10 @@ const weddingDetails: WeddingConfigInput = {
   families: {
     brideFullName: null, // e.g. "Sweekruti Shetty"
     groomFullName: null, // e.g. "Siddhanth Shetty"
-    brideParents: "Mr Krishna Gambhir and Mrs Vanita Gambhir",
-    groomParents: "Mr Chandrahas Shetty and Mrs Ramita Shetty",
-    brideGrandparents: null, // to be added, e.g. ["Mr … and Mrs …", "Mr … and Mrs …"]
-    groomGrandparents: ["Vasu and Gulabi Shetty", "Vasu and Sakubai Shetty"],
+    brideParents: "Shri Krishna Gambhir and Smt. Vanita Gambhir",
+    groomParents: "Shri Chandrahas Shetty and Smt. Ramita Shetty",
+    brideGrandparents: null, // to be added, e.g. ["Shri … and Smt. …", "Shri … and Smt. …"]
+    groomGrandparents: ["Lt. Shri Vasu Shetty and Lt. Smt. Gulabi Shetty", "Lt. Shri Vasu Shetty and Smt. Sakubai Shetty"],
   },
 
   weddingDate: null, // e.g. "2027-02-14"
@@ -209,13 +211,17 @@ const weddingDetails: WeddingConfigInput = {
 
   rsvp: { maxGuestsPerInvite: 6, respondBy: null },
 
-  // The background music. It plays only when a guest presses the play button in the top bar,
-  // and loops until they pause it. To use your own recording (one you have the rights to),
-  // put the file in public/audio and point `src` at it.
+  // The background music. It plays only when a guest chooses "Open with music" or presses the
+  // play button in the top bar, and loops until they pause it.
+  //
+  // BEFORE GOING LIVE: this track belongs to NirvanaSutra Music ("All rights reserved") and
+  // permission to use it has not been confirmed yet. If they say no, switch back to the
+  // original piece made for this site:
+  //   { title: "Mangala Arambha (Raga Hamsadhwani, veena)", src: "/audio/hamsadhwani.mp3", credit: null }
   music: {
-    title: "Mangala Arambha (Raga Hamsadhwani, veena)",
-    src: "/audio/hamsadhwani.mp3",
-    credit: "Original piece synthesised for this invitation",
+    title: "A Sacred Carnatic Wedding Melody",
+    src: "/audio/wedding-music.mp3",
+    credit: "NirvanaSutra Music",
   },
 
 };

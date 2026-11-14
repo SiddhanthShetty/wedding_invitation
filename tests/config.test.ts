@@ -84,3 +84,14 @@ describe("good to know", () => {
     expect(g("#two words")).toBe(false);
   });
 });
+
+describe("music", () => {
+  it("points at a file that exists, with its credit", async () => {
+    const { existsSync } = await import("node:fs");
+    const path = await import("node:path");
+    expect(existsSync(path.join(process.cwd(), "public", weddingConfig.music.src))).toBe(true);
+    expect(weddingConfig.music.credit).toBe("NirvanaSutra Music");
+    // The licence-free fallback stays available.
+    expect(existsSync(path.join(process.cwd(), "public", "audio", "hamsadhwani.mp3"))).toBe(true);
+  });
+});

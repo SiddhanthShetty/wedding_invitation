@@ -62,6 +62,11 @@ export function Footer() {
         <p className="mt-10 text-[0.95rem] text-maroon/70">
           &copy; {new Date().getFullYear()} {coupleNames}. Made with love for our families and friends.
         </p>
+        {weddingConfig.music.credit ? (
+          <p className="mt-1 text-[0.95rem] text-maroon/70">
+            Music: &ldquo;{weddingConfig.music.title}&rdquo; by {weddingConfig.music.credit}
+          </p>
+        ) : null}
       </div>
     </footer>
   );

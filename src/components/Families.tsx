@@ -1,80 +1,93 @@
 import { weddingConfig, type Families as FamiliesConfig } from "@/config/wedding";
 import { Corner, Divider } from "./art";
 
-type Person = { name: string; parents: string | null; relation: "daughter" | "son" };
+type Person = { name: string; parents: string | null; grandparents: string[] | null; relation: "daughter" | "son" };
 
 /**
- * The formal invitation lines, with each set of parents under their child:
+ * The formal invitation lines, with each child's parents and grandparents under their name:
  *   Together with our families, we request the honour of your presence at the marriage of
- *   [bride]  D/o [bride's parents]
+ *   [bride]  D/o [parents]  G/D/o [grandparents]
  *   with
- *   [groom]  S/o [groom's parents]
+ *   [groom]  S/o [parents]  G/S/o [grandparents]
  * With no parents' names filled in, it names just the couple.
  */
 export function familyLines(f: FamiliesConfig, brideName: string, groomName: string) {
-  const bride: Person = { name: f.brideFullName ?? brideName, parents: f.brideParents, relation: "daughter" };
-  const groom: Person = { name: f.groomFullName ?? groomName, parents: f.groomParents, relation: "son" };
-  const blessings = { bride: f.brideGrandparents, groom: f.groomGrandparents };
+  const bride: Person = { name: f.brideFullName ?? brideName, parents: f.brideParents, grandparents: f.brideGrandparents, relation: "daughter" };
+  const groom: Person = { name: f.groomFullName ?? groomName, parents: f.groomParents, grandparents: f.groomGrandparents, relation: "son" };
   if (f.brideParents || f.groomParents) {
-    return {
-      blessings,
-      intro: "Together with our families, we request the honour of your presence at the marriage of",
-      bride,
-      joiner: "with",
-      groom,
-      closing: null,
-    };
+    return { intro: "Together with our families, we request the honour of your presence at the marriage of", bride, joiner: "with", groom, closing: null };
   }
-  return {
-    blessings,
-    intro: "Together with their families",
-    bride,
-    joiner: "and",
-    groom,
-    closing: "request the honour of your presence at their marriage",
-  };
+  return { intro: "Together with their families", bride, joiner: "and", groom, closing: "request the honour of your presence at their marriage" };
 }
 
-const SHORT = { daughter: "D/o", son: "S/o" } as const;
-const LONG = { daughter: "Daughter of", son: "Son of" } as const;
+/** What guests see, and what screen readers say instead. */
+export const RELATION = {
+  daughter: { parents: ["D/o", "Daughter of"], grandparents: ["G/D/o", "Granddaughter of"] },
+  son: { parents: ["S/o", "Son of"], grandparents: ["G/S/o", "Grandson of"] },
+} as const;
 
-function Couple({ person }: { person: Person }) {
+function Relation({ short, long }: { short: string; long: string }) {
+  return (
+    <>
+      <span aria-hidden="true" className="font-label text-[0.95rem] tracking-wide text-gold-deep">
+        {short}
+      </span>
+      <span className="sr-only">{long}</span>{" "}
+    </>
+  );
+}
+
+/** Shows "Lt." as written; screen readers say "Late" (they would otherwise read "Lieutenant"). */
+function Names({ text }: { text: string }) {
+  const parts = text.split(/\bLt\.\s+/);
+  return (
+    <>
+      {parts.map((part, i) => (
+        <span key={i}>
+          {i > 0 ? (
+            <>
+              <span aria-hidden="true">Lt. </span>
+              <span className="sr-only">Late </span>
+            </>
+          ) : null}
+          {part}
+        </span>
+      ))}
+    </>
+  );
+}
+
+function Couple({ person, previewName }: { person: Person; previewName: string }) {
+  const rel = RELATION[person.relation];
+  // A missing grandparents line is left out for guests; the local preview shows where it will go.
+  const preview = process.env.NODE_ENV !== "production";
   return (
     <>
       <p className="text-[clamp(2.4rem,9vw,3.2rem)] leading-tight font-medium italic">{person.name}</p>
       {person.parents ? (
         <p className="mx-auto mt-1.5 max-w-md text-[1.2rem] leading-snug text-balance">
-          {/* Shown as D/o or S/o; screen readers hear "Daughter of" or "Son of". */}
-          <span aria-hidden="true" className="font-label text-[0.95rem] tracking-wide text-gold-deep">
-            {SHORT[person.relation]}
-          </span>
-          <span className="sr-only">{LONG[person.relation]}</span> {person.parents}
+          <Relation short={rel.parents[0]} long={rel.parents[1]} />
+          <Names text={person.parents} />
+        </p>
+      ) : null}
+      {person.grandparents ? (
+        // Each pair gets its own G/D/o or G/S/o: "G/S/o A and B & G/S/o C and D".
+        <p className="mx-auto mt-2 max-w-md text-[1.1rem] leading-snug text-balance text-maroon/90">
+          {person.grandparents.map((pair, i) => (
+            <span key={pair} className="block">
+              {i ? "& " : ""}
+              <Relation short={rel.grandparents[0]} long={rel.grandparents[1]} />
+              <Names text={pair} />
+            </span>
+          ))}
+        </p>
+      ) : preview ? (
+        <p className="mx-auto mt-2 max-w-md text-[1rem] text-maroon/60 italic">
+          <span aria-hidden="true" className="font-label text-[0.9rem] tracking-wide not-italic">{rel.grandparents[0]}</span>{" "}
+          <span className="border-b border-dashed border-maroon/40">{previewName}&rsquo;s grandparents</span> (only you can see this until it&rsquo;s filled in)
         </p>
       ) : null}
     </>
-  );
-}
-
-/** "With the blessings of" and the grandparents, bride's side first. */
-function Blessings({ bride, groom, brideName }: { bride: string[] | null; groom: string[] | null; brideName: string }) {
-  // A missing side is left out for guests; the local preview shows where it will go.
-  const preview = process.env.NODE_ENV !== "production";
-  if (!bride && !groom && !preview) return null;
-  return (
-    <div className="mb-8">
-      <p className="font-label text-[0.95rem] tracking-[0.14em] text-gold-deep">With the blessings of</p>
-      <ul className="mt-2 space-y-0.5 text-[1.15rem] leading-snug">
-        {bride ? (
-          bride.map((n) => <li key={`b-${n}`}>{n}</li>)
-        ) : preview ? (
-          <li className="text-[1rem] text-maroon/60 italic">
-            <span className="border-b border-dashed border-maroon/40">{brideName}&rsquo;s grandparents</span> (only you can see this until it&rsquo;s filled in)
-          </li>
-        ) : null}
-        {groom?.map((n) => <li key={`g-${n}`}>{n}</li>)}
-      </ul>
-      <Divider className="mt-6" color="#B9853A" />
-    </div>
   );
 }
 
@@ -93,13 +106,12 @@ export function Families() {
         <Corner className="absolute bottom-3.5 left-3.5 size-10 -rotate-90" color="#B9853A" />
 
         <div className="relative font-display text-maroon">
-          <Blessings bride={l.blessings.bride} groom={l.blessings.groom} brideName={weddingConfig.brideName} />
           <p className="mx-auto max-w-md text-[1.2rem] leading-relaxed text-pretty italic">{l.intro}</p>
           <div className="mt-6">
-            <Couple person={l.bride} />
+            <Couple person={l.bride} previewName={weddingConfig.brideName} />
           </div>
-          <p className="my-4 font-label text-[1rem] tracking-[0.2em] text-gold-deep">{l.joiner}</p>
-          <Couple person={l.groom} />
+          <p className="my-5 font-label text-[1rem] tracking-[0.2em] text-gold-deep">{l.joiner}</p>
+          <Couple person={l.groom} previewName={weddingConfig.groomName} />
           {l.closing ? <p className="mx-auto mt-5 max-w-md text-[1.15rem] leading-relaxed text-pretty italic">{l.closing}</p> : null}
           <Divider className="mt-8" color="#B9853A" />
         </div>
