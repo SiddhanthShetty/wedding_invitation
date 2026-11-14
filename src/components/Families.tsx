@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { weddingConfig, type Families as FamiliesConfig } from "@/config/wedding";
 import { Corner, Divider } from "./art";
 
@@ -32,26 +33,52 @@ function Relation({ short, long }: { short: string; long: string }) {
       <span aria-hidden="true" className="font-label text-[0.95rem] tracking-wide text-gold-deep">
         {short}
       </span>
-      <span className="sr-only">{long}</span>{" "}
+      <span className="sr-only">{long}</span>
+      {"\u00a0"}
     </>
   );
 }
 
-/** Shows "Lt." as written; screen readers say "Late" (they would otherwise read "Lieutenant"). */
-function Names({ text }: { text: string }) {
-  const parts = text.split(/\bLt\.\s+/);
+/**
+ * One person's name, as written. Titles stay attached to the name ("Lt. Smt. Gulabi Shetty" never
+ * splits after "Smt."), and screen readers say "Late" for "Lt." (they would otherwise read "Lieutenant").
+ */
+function Person({ text }: { text: string }) {
+  const glued = text.replace(/\b(Lt\.|Shri|Smt\.)\s+/g, "$1\u00a0");
+  const parts = glued.split(/\bLt\.\u00a0/);
   return (
     <>
       {parts.map((part, i) => (
         <span key={i}>
           {i > 0 ? (
             <>
-              <span aria-hidden="true">Lt. </span>
+              <span aria-hidden="true">Lt.&nbsp;</span>
               <span className="sr-only">Late </span>
             </>
           ) : null}
           {part}
         </span>
+      ))}
+    </>
+  );
+}
+
+/**
+ * A couple, "A and B": each person starts a new line when the pair doesn't fit on one.
+ * `lead` (e.g. "G/S/o") is kept with the first person so it never sits on a line by itself.
+ */
+function Names({ text, lead }: { text: string; lead?: React.ReactNode }) {
+  const people = text.split(/\s+and\s+/);
+  return (
+    <>
+      {people.map((who, i) => (
+        <Fragment key={i}>
+          {i > 0 ? " " : null}
+          <span className="inline-block">
+            {i === 0 ? lead : "and\u00a0"}
+            <Person text={who} />
+          </span>
+        </Fragment>
       ))}
     </>
   );
@@ -66,8 +93,7 @@ function Couple({ person, previewName }: { person: Person; previewName: string }
       <p className="text-[clamp(2.4rem,9vw,3.2rem)] leading-tight font-medium italic">{person.name}</p>
       {person.parents ? (
         <p className="mx-auto mt-1.5 max-w-md text-[1.2rem] leading-snug text-balance">
-          <Relation short={rel.parents[0]} long={rel.parents[1]} />
-          <Names text={person.parents} />
+          <Names text={person.parents} lead={<Relation short={rel.parents[0]} long={rel.parents[1]} />} />
         </p>
       ) : null}
       {person.grandparents ? (
@@ -75,9 +101,16 @@ function Couple({ person, previewName }: { person: Person; previewName: string }
         <p className="mx-auto mt-2 max-w-md text-[1.1rem] leading-snug text-balance text-maroon/90">
           {person.grandparents.map((pair, i) => (
             <span key={pair} className="block">
-              {i ? "& " : ""}
-              <Relation short={rel.grandparents[0]} long={rel.grandparents[1]} />
-              <Names text={pair} />
+              {i ? " " : null}
+              <Names
+                text={pair}
+                lead={
+                  <>
+                    {i ? "&\u00a0" : null}
+                    <Relation short={rel.grandparents[0]} long={rel.grandparents[1]} />
+                  </>
+                }
+              />
             </span>
           ))}
         </p>

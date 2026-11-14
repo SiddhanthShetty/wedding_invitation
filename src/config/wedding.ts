@@ -125,7 +125,7 @@ const weddingDetails: WeddingConfigInput = {
     brideParents: "Shri Krishna Gambhir and Smt. Vanita Gambhir",
     groomParents: "Shri Chandrahas Shetty and Smt. Ramita Shetty",
     brideGrandparents: null, // to be added, e.g. ["Shri … and Smt. …", "Shri … and Smt. …"]
-    groomGrandparents: ["Lt. Shri Vasu Shetty and Lt. Smt. Gulabi Shetty", "Lt. Shri Vasu Shetty and Smt. Sakubai Shetty"],
+    groomGrandparents: ["Lt. Shri Vasu Shetty, Mullagudde, Palli and Lt. Smt. Gulabi Shetty, Mallibettu, Ninjoor", "Lt. Shri Vasu Shetty and Smt. Sakubai Shetty, Punchilkat, Kalathoor"],
   },
 
   weddingDate: null, // e.g. "2027-02-14"

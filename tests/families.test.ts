@@ -6,7 +6,7 @@ const none = { brideFullName: null, groomFullName: null, brideParents: null, gro
 
 describe("family lines", () => {
   it("has the groom's grandparents and leaves the bride's to be added", () => {
-    expect(weddingConfig.families.groomGrandparents).toEqual(["Lt. Shri Vasu Shetty and Lt. Smt. Gulabi Shetty", "Lt. Shri Vasu Shetty and Smt. Sakubai Shetty"]);
+    expect(weddingConfig.families.groomGrandparents).toEqual(["Lt. Shri Vasu Shetty, Mullagudde, Palli and Lt. Smt. Gulabi Shetty, Mallibettu, Ninjoor", "Lt. Shri Vasu Shetty and Smt. Sakubai Shetty, Punchilkat, Kalathoor"]);
     expect(weddingConfig.families.brideGrandparents).toBeNull();
   });
 
